@@ -134,6 +134,52 @@ class GestureDetectionTests: XCTestCase {
         }
     }
 
+    func testSwipeDetector_LeftwardMovement_ReturnsTrue() {
+        // Arrange
+        let detector = SwipeDetector()
+        let poses = MockHandPoseProvider.createSwipeLeftSequence(frames: 12)
+
+        // Act
+        var detected = false
+        for pose in poses {
+            if detector.detect(handPose: pose) {
+                detected = true
+                break
+            }
+        }
+
+        // Assert
+        XCTAssertTrue(detected, "Leftward swipe should be detected")
+        if case .swipe(let direction) = detector.gestureType {
+            XCTAssertEqual(direction, .left, "Swipe direction should be left")
+        } else {
+            XCTFail("Gesture type should be swipe")
+        }
+    }
+
+    func testSwipeDetector_RightwardMovement_ReturnsTrue() {
+        // Arrange
+        let detector = SwipeDetector()
+        let poses = MockHandPoseProvider.createSwipeRightSequence(frames: 12)
+
+        // Act
+        var detected = false
+        for pose in poses {
+            if detector.detect(handPose: pose) {
+                detected = true
+                break
+            }
+        }
+
+        // Assert
+        XCTAssertTrue(detected, "Rightward swipe should be detected")
+        if case .swipe(let direction) = detector.gestureType {
+            XCTAssertEqual(direction, .right, "Swipe direction should be right")
+        } else {
+            XCTFail("Gesture type should be swipe")
+        }
+    }
+
     func testSwipeDetector_InsufficientMovement_ReturnsFalse() {
         // Arrange
         let detector = SwipeDetector()
@@ -417,6 +463,46 @@ class GestureDetectionTests: XCTestCase {
             XCTAssertEqual(direction, .up, "Detected swipe should be upward")
         } else {
             XCTFail("Should detect an upward swipe")
+        }
+    }
+
+    func testIntegration_HorizontalSwipeSequence() {
+        // Arrange
+        let recognizer = GestureRecognizer()
+        let leftSwipePoses = MockHandPoseProvider.createSwipeLeftSequence(frames: 15)
+        let rightSwipePoses = MockHandPoseProvider.createSwipeRightSequence(frames: 15)
+
+        // Act - Process left swipe sequence
+        var leftResults: [GestureType?] = []
+        for pose in leftSwipePoses {
+            leftResults.append(recognizer.recognize(handPose: pose))
+        }
+
+        // Reset and process right swipe
+        recognizer.reset()
+        var rightResults: [GestureType?] = []
+        for pose in rightSwipePoses {
+            rightResults.append(recognizer.recognize(handPose: pose))
+        }
+
+        // Assert - Left swipe
+        let leftDetected = leftResults.compactMap { $0 }
+        XCTAssertFalse(leftDetected.isEmpty, "Left swipe should be detected")
+        if let firstLeft = leftDetected.first,
+           case .swipe(let direction) = firstLeft {
+            XCTAssertEqual(direction, .left, "Detected swipe should be leftward")
+        } else {
+            XCTFail("Should detect a leftward swipe")
+        }
+
+        // Assert - Right swipe
+        let rightDetected = rightResults.compactMap { $0 }
+        XCTAssertFalse(rightDetected.isEmpty, "Right swipe should be detected")
+        if let firstRight = rightDetected.first,
+           case .swipe(let direction) = firstRight {
+            XCTAssertEqual(direction, .right, "Detected swipe should be rightward")
+        } else {
+            XCTFail("Should detect a rightward swipe")
         }
     }
 

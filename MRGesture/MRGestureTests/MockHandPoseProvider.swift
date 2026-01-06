@@ -293,6 +293,76 @@ class MockHandPoseProvider {
         return poses
     }
 
+    /// Creates a sequence of hand poses showing leftward movement
+    static func createSwipeLeftSequence(frames: Int = 12) -> [HandPose] {
+        var poses: [HandPose] = []
+        let startX: CGFloat = 0.6
+        let endX: CGFloat = 0.3  // Movement of 0.3 leftward
+
+        for i in 0..<frames {
+            let progress = CGFloat(i) / CGFloat(frames - 1)
+            let currentX = startX + (endX - startX) * progress
+
+            var landmarks: [VNHumanHandPoseObservation.JointsGroupName: [VNHumanHandPoseObservation.JointName: CGPoint]] = [:]
+
+            landmarks[.thumb] = [
+                .wrist: CGPoint(x: currentX, y: 0.6)
+            ]
+
+            landmarks[.indexFinger] = [
+                .indexMCP: CGPoint(x: currentX, y: 0.55)
+            ]
+
+            landmarks[.littleFinger] = [
+                .littleMCP: CGPoint(x: currentX + 0.08, y: 0.55)
+            ]
+
+            poses.append(HandPose(
+                landmarks: landmarks,
+                chirality: .right,
+                confidence: 0.95,
+                timestamp: Date().addingTimeInterval(Double(i) * 0.033)
+            ))
+        }
+
+        return poses
+    }
+
+    /// Creates a sequence of hand poses showing rightward movement
+    static func createSwipeRightSequence(frames: Int = 12) -> [HandPose] {
+        var poses: [HandPose] = []
+        let startX: CGFloat = 0.3
+        let endX: CGFloat = 0.6  // Movement of 0.3 rightward
+
+        for i in 0..<frames {
+            let progress = CGFloat(i) / CGFloat(frames - 1)
+            let currentX = startX + (endX - startX) * progress
+
+            var landmarks: [VNHumanHandPoseObservation.JointsGroupName: [VNHumanHandPoseObservation.JointName: CGPoint]] = [:]
+
+            landmarks[.thumb] = [
+                .wrist: CGPoint(x: currentX, y: 0.6)
+            ]
+
+            landmarks[.indexFinger] = [
+                .indexMCP: CGPoint(x: currentX, y: 0.55)
+            ]
+
+            landmarks[.littleFinger] = [
+                .littleMCP: CGPoint(x: currentX + 0.08, y: 0.55)
+            ]
+
+            poses.append(HandPose(
+                landmarks: landmarks,
+                chirality: .right,
+                confidence: 0.95,
+                timestamp: Date().addingTimeInterval(Double(i) * 0.033)
+            ))
+        }
+
+        return poses
+    }
+
     /// Creates a sequence with insufficient movement (should not trigger swipe)
     static func createInsufficientMovementSequence(frames: Int = 12) -> [HandPose] {
         var poses: [HandPose] = []
