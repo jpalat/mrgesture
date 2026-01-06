@@ -7,12 +7,27 @@ class ThumbsUpDetector: GestureDetectorProtocol {
     var gestureType: GestureType { .thumbsUp }
     var priority: Int { 10 }  // High priority (static gesture)
 
-    // Configuration thresholds
-    private let thumbExtensionThreshold: CGFloat = 0.4   // Thumb should be this far from palm
-    private let fingerCurlThreshold: CGFloat = 0.08      // Relative to hand size
-    private let minUpwardAngle: CGFloat = 60.0           // degrees from horizontal
+    // Base configuration thresholds (at 1.0x sensitivity)
+    private let baseThumbExtensionThreshold: CGFloat = 0.4   // Thumb should be this far from palm
+    private let baseFingerCurlThreshold: CGFloat = 0.08      // Relative to hand size
+    private let basePalmDistanceThreshold: CGFloat = 0.3     // Minimum thumb-to-palm distance
+    private let minUpwardAngle: CGFloat = 60.0               // degrees from horizontal
+
+    private let configurationManager: ConfigurationManager
+
+    init(configurationManager: ConfigurationManager = ConfigurationManager()) {
+        self.configurationManager = configurationManager
+    }
 
     func detect(handPose: HandPose) -> Bool {
+        // Get current sensitivity (higher = more lenient)
+        let sensitivity = CGFloat(configurationManager.gestureSensitivity)
+
+        // Adjust thresholds based on sensitivity
+        // Higher sensitivity → lower thresholds → easier detection
+        let thumbExtensionThreshold = baseThumbExtensionThreshold / sensitivity
+        let fingerCurlThreshold = baseFingerCurlThreshold / sensitivity
+        let palmDistanceThreshold = basePalmDistanceThreshold / sensitivity
         // 1. Check that thumb is extended
         guard let thumbTip = handPose.landmark(.thumbTip),
               let thumbIP = handPose.landmark(.thumbIP),
@@ -67,7 +82,7 @@ class ThumbsUpDetector: GestureDetectorProtocol {
             let normalizedDistance = thumbPalmDistance / handSize
 
             // Thumb should be reasonably far from palm center
-            if normalizedDistance < 0.3 {
+            if normalizedDistance < palmDistanceThreshold {
                 return false
             }
         }

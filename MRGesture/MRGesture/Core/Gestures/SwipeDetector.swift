@@ -13,12 +13,18 @@ class SwipeDetector: GestureDetectorProtocol {
         return .swipe(direction: detectedDirection)
     }
 
-    // Configuration
+    // Base configuration thresholds (at 1.0x sensitivity)
     private let historyFrames = 15                        // Track last 15 frames
-    private let minSwipeDistance: CGFloat = 0.15          // 15% of screen (normalized coordinates)
-    private let minVelocity: CGFloat = 0.01               // Minimum velocity threshold
+    private let baseMinSwipeDistance: CGFloat = 0.15      // 15% of screen (normalized coordinates)
+    private let baseMinVelocity: CGFloat = 0.01           // Minimum velocity threshold
     private let swipeCooldown: TimeInterval = 0.5         // 500ms between swipes
     private let detectionSustainFrames = 3                // Keep returning true for temporal smoothing
+
+    private let configurationManager: ConfigurationManager
+
+    init(configurationManager: ConfigurationManager = ConfigurationManager()) {
+        self.configurationManager = configurationManager
+    }
 
     // State tracking
     private var palmPositionHistory: [(position: CGPoint, timestamp: Date)] = []
@@ -31,6 +37,14 @@ class SwipeDetector: GestureDetectorProtocol {
             framesRemainingToSustain -= 1
             return true
         }
+
+        // Get current sensitivity (higher = more lenient)
+        let sensitivity = CGFloat(configurationManager.gestureSensitivity)
+
+        // Adjust thresholds based on sensitivity
+        // Higher sensitivity → lower thresholds → easier detection
+        let minSwipeDistance = baseMinSwipeDistance / sensitivity
+        let minVelocity = baseMinVelocity / sensitivity
 
         // Get current palm center
         guard let palmCenter = handPose.palmCenter() else {

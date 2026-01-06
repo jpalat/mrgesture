@@ -43,6 +43,41 @@ struct SettingsView: View {
             .background(Color.secondary.opacity(0.1))
             .cornerRadius(8)
 
+            // Gesture Settings Section
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Gesture Settings")
+                    .font(.headline)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Sensitivity")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(String(format: "%.1fx", viewModel.gestureSensitivity))
+                            .foregroundColor(.blue)
+                            .fontWeight(.semibold)
+                    }
+
+                    Slider(value: Binding(
+                        get: { viewModel.gestureSensitivity },
+                        set: { viewModel.updateGestureSensitivity($0) }
+                    ), in: 0.5...2.0, step: 0.1)
+
+                    HStack {
+                        Text("More Strict")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("More Lenient")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color.secondary.opacity(0.1))
+            .cornerRadius(8)
+
             // Gesture Mappings Section
             VStack(alignment: .leading, spacing: 12) {
                 Text("Gesture Mappings")
@@ -59,8 +94,13 @@ struct SettingsView: View {
                 )
 
                 GestureMappingRow(
-                    gesture: "👆 Swipe Up/Down",
-                    action: "Scrolls page"
+                    gesture: "👆👇 Swipe Vertical",
+                    action: "Scrolls up/down"
+                )
+
+                GestureMappingRow(
+                    gesture: "👈👉 Swipe Horizontal",
+                    action: "Scrolls left/right"
                 )
             }
             .padding()
@@ -76,7 +116,7 @@ struct SettingsView: View {
                 .padding(.bottom)
         }
         .padding()
-        .frame(width: 500, height: 450)
+        .frame(width: 500, height: 550)
         .onAppear {
             viewModel.refreshPermissions()
         }
@@ -108,11 +148,15 @@ struct GestureMappingRow: View {
 class SettingsViewModel: ObservableObject {
     @Published var cameraPermissionGranted: Bool = false
     @Published var accessibilityPermissionGranted: Bool = false
+    @Published var gestureSensitivity: Double = 1.0
 
     private let permissionManager: PermissionManager
+    private let configurationManager: ConfigurationManager
 
-    init(permissionManager: PermissionManager) {
+    init(permissionManager: PermissionManager, configurationManager: ConfigurationManager = ConfigurationManager()) {
         self.permissionManager = permissionManager
+        self.configurationManager = configurationManager
+        self.gestureSensitivity = configurationManager.gestureSensitivity
         refreshPermissions()
     }
 
@@ -130,6 +174,11 @@ class SettingsViewModel: ObservableObject {
 
     func openAccessibilityPreferences() {
         permissionManager.openSystemPreferences()
+    }
+
+    func updateGestureSensitivity(_ value: Double) {
+        configurationManager.gestureSensitivity = value
+        gestureSensitivity = value
     }
 }
 

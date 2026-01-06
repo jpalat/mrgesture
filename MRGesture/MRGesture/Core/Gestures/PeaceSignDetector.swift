@@ -7,13 +7,27 @@ class PeaceSignDetector: GestureDetectorProtocol {
     var gestureType: GestureType { .peaceSign }
     var priority: Int { 10 }  // High priority (static gesture)
 
-    // Configuration thresholds
+    // Base configuration thresholds (at 1.0x sensitivity)
+    private let baseFingerExtensionThreshold: CGFloat = 0.15  // Relative to hand size
+    private let baseFingerCurlThreshold: CGFloat = 0.05       // Relative to hand size
     private let minFingerSpread: CGFloat = 15.0   // degrees
     private let maxFingerSpread: CGFloat = 50.0   // degrees
-    private let fingerExtensionThreshold: CGFloat = 0.15  // Relative to hand size
-    private let fingerCurlThreshold: CGFloat = 0.05       // Relative to hand size
+
+    private let configurationManager: ConfigurationManager
+
+    init(configurationManager: ConfigurationManager = ConfigurationManager()) {
+        self.configurationManager = configurationManager
+    }
 
     func detect(handPose: HandPose) -> Bool {
+        // Get current sensitivity (higher = more lenient)
+        let sensitivity = CGFloat(configurationManager.gestureSensitivity)
+
+        // Adjust thresholds based on sensitivity
+        // Higher sensitivity → lower thresholds → easier detection
+        let fingerExtensionThreshold = baseFingerExtensionThreshold / sensitivity
+        let fingerCurlThreshold = baseFingerCurlThreshold / sensitivity
+
         // 1. Check index and middle fingers are extended
         guard handPose.isFingerExtended(.index, threshold: fingerExtensionThreshold),
               handPose.isFingerExtended(.middle, threshold: fingerExtensionThreshold) else {

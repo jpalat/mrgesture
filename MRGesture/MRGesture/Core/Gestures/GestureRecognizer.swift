@@ -2,6 +2,7 @@ import Foundation
 
 class GestureRecognizer {
     private var detectors: [GestureDetectorProtocol] = []
+    private let configurationManager: ConfigurationManager
 
     // Temporal smoothing: require N consecutive detections
     private let requiredConsecutiveFrames = 3
@@ -11,7 +12,8 @@ class GestureRecognizer {
     private var lastGestureTime: [GestureType: Date] = [:]
     private let gestureCooldown: TimeInterval = 1.0  // 1 second between same gesture
 
-    init() {
+    init(configurationManager: ConfigurationManager = ConfigurationManager()) {
+        self.configurationManager = configurationManager
         registerDetectors()
     }
 
@@ -21,9 +23,9 @@ class GestureRecognizer {
         // Register all gesture detectors
         // Higher priority detectors are checked first
         detectors = [
-            PeaceSignDetector(),     // Priority 10
-            ThumbsUpDetector(),      // Priority 10
-            SwipeDetector()          // Priority 5
+            PeaceSignDetector(configurationManager: configurationManager),     // Priority 10
+            ThumbsUpDetector(configurationManager: configurationManager),      // Priority 10
+            SwipeDetector(configurationManager: configurationManager)          // Priority 5
         ]
 
         // Sort by priority (descending)
