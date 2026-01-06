@@ -140,17 +140,3 @@ class HandPoseDetector {
         return -lastTime.timeIntervalSinceNow * 1000.0
     }
 }
-
-// MARK: - CameraManager Integration
-
-extension CameraManager {
-    /// Updated processFrame to integrate with HandPoseDetector
-    func integrateHandPoseDetector(_ detector: HandPoseDetector) {
-        // This method shows how to wire up CameraManager with HandPoseDetector
-        // In practice, we'll do this in AppDelegate
-
-        detector.onHandPoseDetected = { [weak self] handPose in
-            self?.onFrameProcessed?(handPose)
-        }
-    }
-}

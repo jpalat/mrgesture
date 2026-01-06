@@ -3,20 +3,35 @@ import CoreGraphics
 
 /// Detects swipe gestures based on palm movement over time
 class SwipeDetector: GestureDetectorProtocol {
-    var gestureType: GestureType { .swipe(direction: .up) }  // Placeholder, actual direction determined dynamically
     var priority: Int { 5 }  // Lower priority than static gestures
+
+    // Direction tracking (must be declared before gestureType)
+    private var detectedDirection: SwipeDirection = .up
+
+    // Dynamic gestureType based on detected direction
+    var gestureType: GestureType {
+        return .swipe(direction: detectedDirection)
+    }
 
     // Configuration
     private let historyFrames = 15                        // Track last 15 frames
     private let minSwipeDistance: CGFloat = 0.15          // 15% of screen (normalized coordinates)
     private let minVelocity: CGFloat = 0.01               // Minimum velocity threshold
     private let swipeCooldown: TimeInterval = 0.5         // 500ms between swipes
+    private let detectionSustainFrames = 3                // Keep returning true for temporal smoothing
 
     // State tracking
     private var palmPositionHistory: [(position: CGPoint, timestamp: Date)] = []
     private var lastSwipeTime: Date?
+    private var framesRemainingToSustain = 0              // Frames left to keep returning true
 
     func detect(handPose: HandPose) -> Bool {
+        // If we're sustaining a previous detection for temporal smoothing
+        if framesRemainingToSustain > 0 {
+            framesRemainingToSustain -= 1
+            return true
+        }
+
         // Get current palm center
         guard let palmCenter = handPose.palmCenter() else {
             return false
@@ -96,30 +111,16 @@ class SwipeDetector: GestureDetectorProtocol {
         // Clear history to prepare for next swipe
         palmPositionHistory.removeAll()
 
+        // Sustain detection for temporal smoothing (3 frames total including this one)
+        framesRemainingToSustain = detectionSustainFrames - 1
+
         return true
     }
 
     func reset() {
         palmPositionHistory.removeAll()
         lastSwipeTime = nil
-    }
-
-    // MARK: - Direction Tracking
-
-    private var detectedDirection: SwipeDirection = .up
-
-    // Override gestureType to return detected direction
-    var dynamicGestureType: GestureType {
-        return .swipe(direction: detectedDirection)
-    }
-}
-
-// MARK: - SwipeDetector Extension for GestureRecognizer
-
-extension SwipeDetector {
-    /// Get the last detected swipe direction
-    /// Call this after detect() returns true
-    func lastDetectedDirection() -> SwipeDirection {
-        return detectedDirection
+        detectedDirection = .up  // Reset to default
+        framesRemainingToSustain = 0
     }
 }

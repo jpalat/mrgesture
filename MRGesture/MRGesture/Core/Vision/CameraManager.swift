@@ -7,12 +7,26 @@ class CameraManager: NSObject {
     private let sessionQueue = DispatchQueue(label: "com.mrgesture.camera")
     private var isSessionRunning = false
 
+    // Hand pose detector
+    private let handPoseDetector = HandPoseDetector()
+
     // Callback for processed frames
     var onFrameProcessed: ((HandPose) -> Void)?
 
     // Performance settings
     private var targetFrameRate: Int = 30
     private var isProcessing = false
+
+    // MARK: - Initialization
+
+    override init() {
+        super.init()
+
+        // Wire up hand pose detector callback
+        handPoseDetector.onHandPoseDetected = { [weak self] handPose in
+            self?.onFrameProcessed?(handPose)
+        }
+    }
 
     // MARK: - Session Lifecycle
 
@@ -130,12 +144,11 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 
     private func processFrame(_ pixelBuffer: CVPixelBuffer) {
-        // This will be called by HandPoseDetector
-        // For now, create a placeholder that will be replaced when we integrate HandPoseDetector
-
-        // The actual processing will be:
-        // HandPoseDetector.shared.processFrame(pixelBuffer) { [weak self] handPose in
-        //     self?.onFrameProcessed?(handPose)
-        // }
+        // Process frame with Vision framework hand pose detector
+        handPoseDetector.processFrame(pixelBuffer) { [weak self] handPose in
+            // HandPose callback is already wired up in init()
+            // This completion handler is redundant with onHandPoseDetected callback
+            // but kept for potential future use
+        }
     }
 }
